@@ -1,9 +1,13 @@
 /**
  * API ROUTE: /api/pricing/calculate
- * Unified single-call NVIDIA inference — all agents in one request.
+ *
+ * Two-stage pipeline:
+ *   1. Deterministic actuarial engine (TMI 2011, <1ms, no LLM)
+ *   2. NVIDIA NIM regulatory check (OJK POJK citations, LLM)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { calculate as engineCalculate } from '@/lib/actuarial-engine';
 import { ActuarialOrchestrator } from '@/lib/nvidia-gemini-orchestrator';
 import { z } from 'zod';
 
@@ -33,45 +37,65 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const input = ProductRequestSchema.parse(body);
 
-    const orchestrator = new ActuarialOrchestrator();
-    const result = await orchestrator.calculate(input);
+    const engineInput = {
+      productType: input.productType,
+      ageRange: input.targetMarket.ageRange as [number, number],
+      sumAssured: input.coverage.sumAssured,
+      policyTerm: input.coverage.policyTerm,
+      distributionChannels: input.distribution.channels,
+    };
 
-    const { product, actuary, regulatory, confidence } = result;
+    // Stage 1: deterministic — always fast and reproducible
+    const actuarial = engineCalculate(engineInput);
+
+    // Stage 2: LLM regulatory check
+    const orchestrator = new ActuarialOrchestrator();
+    let regulatory;
+    try {
+      regulatory = await orchestrator.checkRegulatory(engineInput, actuarial);
+    } catch (regErr) {
+      console.error('Regulatory check failed (non-fatal):', regErr);
+      regulatory = {
+        overallCompliance: 'Unknown' as const,
+        checks: {},
+        recommendations: [],
+      };
+    }
 
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
       provider: {
-        primary: 'nvidia',
-        model: process.env.NVIDIA_MODEL || 'mistralai/mistral-7b-instruct-v0.3',
+        actuarial: 'deterministic',
+        mortalityTable: 'TMI 2011',
+        regulatory: 'nvidia-nim',
+        model: process.env.NVIDIA_MODEL || 'meta/llama-3.2-3b-instruct',
       },
       results: {
-        product: product ?? {},
-        actuarial: actuary ?? {},
-        regulatory: regulatory ?? {},
-        metadata: {
-          confidence: confidence ?? 0.9,
-          disagreements: [],
-          recommendation: 'Unified inference result',
-        },
+        actuarial,
+        regulatory,
       },
       summary: {
-        productName: product?.productName ?? input.productName,
-        monthlyPremium: actuary?.pricing?.monthlyPremium,
-        premiumBreakdown: actuary?.pricing?.breakdown ?? {},
-        assumptions: actuary?.assumptions ?? {},
-        reserves: actuary?.reserves ?? {},
-        complianceStatus: regulatory?.overallCompliance ?? 'Unknown',
-        complianceChecks: regulatory?.checks ?? {},
-        recommendations: regulatory?.recommendations ?? [],
-        confidence: confidence ?? 0.9,
-        confidenceBreakdown: actuary?.confidence ?? { overall: 0.9 },
-        primaryProvider: 'nvidia',
+        productName: input.productName,
+        productType: input.productType,
+        entryAge: actuarial.assumptions.entryAge,
+        monthlyPremium: actuarial.pricing.monthlyPremium,
+        annualPremium: actuarial.pricing.annualPremium,
+        netAnnualPremium: actuarial.pricing.netAnnualPremium,
+        premiumBreakdown: actuarial.pricing.breakdown,
+        assumptions: actuarial.assumptions,
+        reserves: actuarial.reserves,
+        riskMetrics: actuarial.riskMetrics,
+        profitability: actuarial.profitability,
+        confidenceBreakdown: actuarial.confidence,
+        complianceStatus: (regulatory as any).overallCompliance ?? 'Unknown',
+        complianceChecks: (regulatory as any).checks ?? {},
+        recommendations: (regulatory as any).recommendations ?? [],
       },
     });
 
   } catch (error) {
-    console.error('❌ Pricing calculation failed:', error);
+    console.error('Pricing calculation failed:', error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

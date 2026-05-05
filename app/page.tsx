@@ -5,16 +5,16 @@ import { useState, useEffect } from "react";
 function LoadingMessage() {
   const [step, setStep] = useState(0);
   const messages = [
-    "gathering product structure...",
-    "calculating actuarial models...",
-    "verifying compliance...",
-    "finalizing pricing..."
+    "computing TMI 2011 mortality table...",
+    "applying prospective reserve method...",
+    "running OJK regulatory check...",
+    "finalizing compliance citations..."
   ];
 
   useEffect(() => {
     const interval = setInterval(() => {
       setStep((s) => (s < messages.length - 1 ? s + 1 : s));
-    }, 6000);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -71,6 +71,8 @@ export default function Home() {
     }
   };
 
+  const s = result?.summary;
+
   return (
     <main className="min-h-screen bg-[#F9F8F6] text-[#4A443C] selection:bg-[#DED7CF] font-sans">
       <div className="max-w-5xl mx-auto px-6 py-16 md:py-24">
@@ -79,12 +81,12 @@ export default function Home() {
             Actuarial Simulator
           </h1>
           <p className="text-[#8C857B] text-lg font-light tracking-wide">
-            Crafted by newbie, using multi-agent framework. Pitch for Head of Product Insight.
+            Indonesian insurance pricing · OJK regulatory compliance · TMI 2011 mortality table
           </p>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24">
-          
+
           {/* Form Section */}
           <section className="lg:col-span-5">
             <h2 className="text-xl font-medium tracking-wide mb-8 text-[#2D2A26]">Product Configuration</h2>
@@ -116,7 +118,7 @@ export default function Home() {
 
               <div className="grid grid-cols-2 gap-8">
                 <div>
-                  <label className="block text-xs uppercase tracking-widest text-[#8C857B] mb-2">Sum Assured</label>
+                  <label className="block text-xs uppercase tracking-widest text-[#8C857B] mb-2">Sum Assured (IDR)</label>
                   <input
                     type="number"
                     value={Number.isNaN(formData.sumAssured) ? "" : formData.sumAssured}
@@ -125,7 +127,7 @@ export default function Home() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs uppercase tracking-widest text-[#8C857B] mb-2">Policy Term</label>
+                  <label className="block text-xs uppercase tracking-widest text-[#8C857B] mb-2">Policy Term (yrs)</label>
                   <input
                     type="number"
                     value={Number.isNaN(formData.policyTerm) ? "" : formData.policyTerm}
@@ -179,7 +181,7 @@ export default function Home() {
                     : "bg-[#2D2A26] text-[#F9F8F6] hover:bg-[#4A443C]"
                 }`}
               >
-                {loading ? "Simulating..." : "Calculate Premium"}
+                {loading ? "Calculating..." : "Calculate Premium"}
                 {!loading && <span className="transform transition-transform group-hover:translate-x-2">→</span>}
               </button>
             </form>
@@ -190,7 +192,7 @@ export default function Home() {
             {!loading && !result && (
               <div className="h-full flex items-center justify-center border border-[#EBE8E3] bg-[#FAF9F7]">
                 <p className="text-[#A69F96] text-sm tracking-widest uppercase font-light text-center px-12 leading-relaxed">
-                  The simulation will reveal the balance between risk and value.
+                  Premium computed from TMI 2011 mortality table · Regulations verified against OJK POJK
                 </p>
               </div>
             )}
@@ -204,120 +206,144 @@ export default function Home() {
 
             {result && !result.success && (
               <div className="bg-[#FFF4F2] border-l-4 border-[#D97972] p-8">
-                <h3 className="text-xl font-medium text-[#2D2A26] mb-2">Simulation Disrupted</h3>
-                <p className="text-[#8C857B] text-sm mb-4">An imbalance occurred in the models.</p>
+                <h3 className="text-xl font-medium text-[#2D2A26] mb-2">Calculation Failed</h3>
+                <p className="text-[#8C857B] text-sm mb-4">Check API key or input values.</p>
                 <div className="bg-white/50 p-4 font-mono text-xs text-[#D97972]">
                   {result.message || result.error || "Unknown error"}
                 </div>
               </div>
             )}
 
-            {result && result.success && (
-              <div className="space-y-12 animate-fade-in">
-                {/* Premium Card */}
+            {result && result.success && s && (
+              <div className="space-y-10 animate-fade-in">
+
+                {/* Premium Hero */}
                 <div className="bg-[#F2EFEA] p-10 border border-[#EBE8E3]">
-                  <p className="text-xs uppercase tracking-widest text-[#8C857B] mb-2">Calculated Value</p>
-                  <div className="flex items-baseline gap-2 mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs uppercase tracking-widest text-[#8C857B]">Monthly Premium</p>
+                    <span className="text-[10px] uppercase tracking-widest bg-[#EBE8E3] text-[#4A443C] px-2 py-1">
+                      Deterministic · TMI 2011
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-2 mb-3">
                     <span className="text-2xl text-[#8C857B] font-light">IDR</span>
                     <span className="text-5xl lg:text-6xl font-light text-[#2D2A26] font-serif">
-                      {result.summary?.monthlyPremium?.toLocaleString() || "---"}
+                      {s.monthlyPremium?.toLocaleString() || "---"}
                     </span>
                     <span className="text-sm text-[#8C857B] tracking-wide ml-2">/ month</span>
                   </div>
-                  <p className="text-sm text-[#8C857B]">
-                    Annual Equivalent: IDR {result.summary?.monthlyPremium ? (result.summary.monthlyPremium * 12).toLocaleString() : "---"}
-                  </p>
+                  <div className="flex gap-6 text-sm text-[#8C857B]">
+                    <span>Annual: IDR {s.annualPremium?.toLocaleString() || "---"}</span>
+                    <span>·</span>
+                    <span>Net (pure risk): IDR {s.netAnnualPremium?.toLocaleString() || "---"}</span>
+                    <span>·</span>
+                    <span>Entry age: {s.entryAge}</span>
+                  </div>
                 </div>
 
-                {/* Actuarial Breakdown Section */}
-                <div className="mt-12 mb-8">
-                  <h2 className="text-2xl font-serif text-[#2D2A26] mb-6">Actuarial Breakdown</h2>
-                  
+                {/* Actuarial Breakdown */}
+                <div>
+                  <h2 className="text-xl font-serif text-[#2D2A26] mb-6">Actuarial Breakdown</h2>
+
                   {/* Premium Breakdown */}
                   <div className="bg-[#FAF9F7] p-8 border border-[#EBE8E3] mb-6">
-                    <h3 className="text-lg font-medium text-[#2D2A26] mb-6">Premium Breakdown</h3>
-                    <div className="space-y-4 text-sm">
-                      <div className="flex justify-between border-b border-[#EBE8E3] pb-2">
-                        <span className="text-[#4A443C]">Expected Claims</span>
-                        <span className="font-medium">Rp {((result.summary?.premiumBreakdown?.claims <= 1 ? result.summary?.premiumBreakdown?.claims * result.summary?.monthlyPremium : result.summary?.premiumBreakdown?.claims) || 0).toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between border-b border-[#EBE8E3] pb-2">
-                        <span className="text-[#4A443C]">Expenses</span>
-                        <span className="font-medium">Rp {((result.summary?.premiumBreakdown?.expenses <= 1 ? result.summary?.premiumBreakdown?.expenses * result.summary?.monthlyPremium : result.summary?.premiumBreakdown?.expenses) || 0).toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between border-b border-[#EBE8E3] pb-2">
-                        <span className="text-[#4A443C]">Profit Margin</span>
-                        <span className="font-medium">Rp {((result.summary?.premiumBreakdown?.profit <= 1 ? result.summary?.premiumBreakdown?.profit * result.summary?.monthlyPremium : result.summary?.premiumBreakdown?.profit) || 0).toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between border-b border-[#EBE8E3] pb-2">
-                        <span className="text-[#4A443C]">Commission</span>
-                        <span className="font-medium">Rp {((result.summary?.premiumBreakdown?.commission <= 1 ? result.summary?.premiumBreakdown?.commission * result.summary?.monthlyPremium : result.summary?.premiumBreakdown?.commission) || 0).toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between bg-[#F2F5F1] p-3 -mx-3 rounded font-semibold text-[#2D2A26] mt-4">
-                        <span>Total Monthly Premium</span>
-                        <span>Rp {result.summary?.monthlyPremium?.toLocaleString() || "0"}</span>
+                    <h3 className="text-sm uppercase tracking-widest text-[#2D2A26] mb-5">Premium Components</h3>
+                    <div className="space-y-3 text-sm">
+                      {[
+                        { label: "Expected Claims (net premium)", key: "claims" },
+                        { label: "Expenses", key: "expenses" },
+                        { label: "Commission", key: "commission" },
+                        { label: "Profit Margin", key: "profit" },
+                      ].map(({ label, key }) => (
+                        <div key={key} className="flex justify-between border-b border-[#EBE8E3] pb-2">
+                          <span className="text-[#4A443C]">{label}</span>
+                          <span className="font-medium">
+                            Rp {(s.premiumBreakdown?.[key] || 0).toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between bg-[#F2F5F1] p-3 -mx-3 font-semibold text-[#2D2A26] mt-2">
+                        <span>Total Annual Premium</span>
+                        <span>Rp {s.annualPremium?.toLocaleString() || "0"}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Actuarial Assumptions */}
                   <div className="bg-[#FAF9F7] p-8 border border-[#EBE8E3] mb-6">
-                    <h3 className="text-lg font-medium text-[#2D2A26] mb-6">Actuarial Assumptions</h3>
-                    <div className="grid grid-cols-2 gap-y-6 gap-x-12">
-                      <div>
-                        <p className="text-[#8C857B] text-sm mb-1">Mortality Rate</p>
-                        <p className="text-lg font-medium text-[#2D2A26]">{(result.summary?.assumptions?.mortalityRate * 100 || 0).toFixed(4)}%</p>
-                      </div>
-                      <div>
-                        <p className="text-[#8C857B] text-sm mb-1">Expense Ratio</p>
-                        <p className="text-lg font-medium text-[#2D2A26]">{(result.summary?.assumptions?.expenseRatio * 100 || 0).toFixed(1)}%</p>
-                      </div>
-                      <div>
-                        <p className="text-[#8C857B] text-sm mb-1">Discount Rate</p>
-                        <p className="text-lg font-medium text-[#2D2A26]">{(result.summary?.assumptions?.discountRate * 100 || 0).toFixed(1)}%</p>
-                      </div>
-                      <div>
-                        <p className="text-[#8C857B] text-sm mb-1">Lapse Rate</p>
-                        <p className="text-lg font-medium text-[#2D2A26]">{(result.summary?.assumptions?.lapseRate * 100 || 0).toFixed(1)}%</p>
-                      </div>
+                    <div className="flex items-center justify-between mb-5">
+                      <h3 className="text-sm uppercase tracking-widest text-[#2D2A26]">Actuarial Assumptions</h3>
+                      <span className="text-[10px] uppercase tracking-widest bg-[#EBE8E3] text-[#4A443C] px-2 py-1">
+                        {s.assumptions?.mortalityTable || "TMI 2011"}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-y-5 gap-x-8">
+                      {[
+                        { label: "Mortality Rate (qx)", value: `${(s.assumptions?.mortalityRate * 1000 || 0).toFixed(2)}‰` },
+                        { label: "Morbidity Rate", value: s.assumptions?.morbidityRate > 0 ? `${(s.assumptions.morbidityRate * 100).toFixed(1)}%` : "N/A" },
+                        { label: "Discount Rate", value: `${(s.assumptions?.discountRate * 100 || 0).toFixed(1)}%` },
+                        { label: "Inflation Rate", value: `${(s.assumptions?.inflationRate * 100 || 0).toFixed(1)}%` },
+                        { label: "Expense Ratio", value: `${(s.assumptions?.expenseRatio * 100 || 0).toFixed(0)}%` },
+                        { label: "Commission Rate", value: `${(s.assumptions?.commissionRate * 100 || 0).toFixed(0)}%` },
+                        { label: "Lapse Rate", value: `${(s.assumptions?.lapseRate * 100 || 0).toFixed(1)}%` },
+                        { label: "Claims Ratio", value: `${(s.profitability?.claimsRatio * 100 || 0).toFixed(1)}%` },
+                        { label: "IRR", value: `${(s.profitability?.irr * 100 || 0).toFixed(0)}%` },
+                      ].map(({ label, value }) => (
+                        <div key={label}>
+                          <p className="text-[#8C857B] text-xs mb-1">{label}</p>
+                          <p className="text-base font-medium text-[#2D2A26]">{value}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
                   {/* Reserve Projections */}
-                  <div className="bg-[#FAF9F7] p-8 border border-[#EBE8E3]">
-                    <h3 className="text-lg font-medium text-[#2D2A26] mb-6">Reserve Projections</h3>
+                  <div className="bg-[#FAF9F7] p-8 border border-[#EBE8E3] mb-6">
+                    <h3 className="text-sm uppercase tracking-widest text-[#2D2A26] mb-5">Reserve Projections</h3>
                     <div className="grid grid-cols-3 gap-8">
+                      {[
+                        { label: "Year 1", value: s.reserves?.year1 },
+                        { label: "Year 5", value: s.reserves?.year5 },
+                        { label: "Year 10", value: s.reserves?.year10 },
+                      ].map(({ label, value }) => (
+                        <div key={label}>
+                          <p className="text-[#8C857B] text-xs mb-1">{label}</p>
+                          <p className="font-medium text-[#2D2A26]">Rp {(value || 0).toLocaleString()}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-[#EBE8E3] flex gap-8 text-sm">
                       <div>
-                        <p className="text-[#8C857B] text-sm mb-1">Year 1</p>
-                        <p className="font-medium text-[#2D2A26]">Rp {result.summary?.reserves?.year1?.toLocaleString() || "0"}</p>
+                        <p className="text-[#8C857B] text-xs mb-1">Solvency Margin Ratio</p>
+                        <p className={`font-medium ${(s.riskMetrics?.solvencyMarginRatio || 0) >= 1.2 ? "text-[#7D8C7A]" : "text-[#D97972]"}`}>
+                          {(s.riskMetrics?.solvencyMarginRatio || 0).toFixed(2)}x
+                          {(s.riskMetrics?.solvencyMarginRatio || 0) >= 1.2 ? " ✓" : " ✗ < 1.20 OJK min"}
+                        </p>
                       </div>
                       <div>
-                        <p className="text-[#8C857B] text-sm mb-1">Year 5</p>
-                        <p className="font-medium text-[#2D2A26]">Rp {result.summary?.reserves?.year5?.toLocaleString() || "0"}</p>
-                      </div>
-                      <div>
-                        <p className="text-[#8C857B] text-sm mb-1">Year 10</p>
-                        <p className="font-medium text-[#2D2A26]">Rp {result.summary?.reserves?.year10?.toLocaleString() || "0"}</p>
+                        <p className="text-[#8C857B] text-xs mb-1">VaR (95th pct)</p>
+                        <p className="font-medium text-[#2D2A26]">Rp {(s.riskMetrics?.valueAtRisk || 0).toLocaleString()}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
+                {/* Confidence + Regulatory */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Confidence Breakdown */}
+                  {/* Confidence */}
                   <div>
-                    <h3 className="text-sm uppercase tracking-widest text-[#2D2A26] border-b border-[#EBE8E3] pb-3 mb-6 flex justify-between">
+                    <h3 className="text-sm uppercase tracking-widest text-[#2D2A26] border-b border-[#EBE8E3] pb-3 mb-5 flex justify-between">
                       <span>Model Confidence</span>
-                      <span>{Math.round((result.summary?.confidenceBreakdown?.overall || 0) * 100)}%</span>
+                      <span>{Math.round((s.confidenceBreakdown?.overall || 0) * 100)}%</span>
                     </h3>
                     <ul className="space-y-4">
-                      {Object.entries(result.summary?.confidenceBreakdown || {}).map(([key, value]) => {
-                        if (key === 'overall') return null;
+                      {Object.entries(s.confidenceBreakdown || {}).map(([key, value]) => {
+                        if (key === "overall") return null;
                         const score = Number(value);
                         return (
                           <li key={key} className="text-sm">
                             <div className="flex justify-between text-[#8C857B] mb-1">
-                              <span className="capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                              <span className="capitalize">{key.replace(/([A-Z])/g, " $1").trim()}</span>
                               <span>{Math.round(score * 100)}%</span>
                             </div>
                             <div className="w-full h-[1px] bg-[#EBE8E3]">
@@ -329,28 +355,34 @@ export default function Home() {
                     </ul>
                   </div>
 
-                  {/* Compliance Breakdown */}
+                  {/* Regulatory */}
                   <div>
-                    <h3 className="text-sm uppercase tracking-widest text-[#2D2A26] border-b border-[#EBE8E3] pb-3 mb-6 flex justify-between">
-                      <span>Regulatory Status</span>
+                    <h3 className="text-sm uppercase tracking-widest text-[#2D2A26] border-b border-[#EBE8E3] pb-3 mb-5 flex justify-between">
+                      <span>OJK Regulatory Status</span>
                       <span className={
-                        result.summary?.complianceStatus === 'Unknown' ? 'text-[#B5AFA6]' :
-                        String(result.summary?.complianceStatus).toLowerCase().includes('compliant') ? 'text-[#7D8C7A]' : 'text-[#D97972]'
+                        !s.complianceStatus || s.complianceStatus === "Unknown" ? "text-[#B5AFA6]" :
+                        String(s.complianceStatus).toLowerCase().includes("compliant") ? "text-[#7D8C7A]" :
+                        s.complianceStatus === "requires_sandbox" ? "text-[#C9A84C]" :
+                        "text-[#D97972]"
                       }>
-                        {result.summary?.complianceStatus === 'Unknown' ? 'Pending' : result.summary?.complianceStatus}
+                        {!s.complianceStatus || s.complianceStatus === "Unknown" ? "Pending" : s.complianceStatus}
                       </span>
                     </h3>
-                    {result.summary?.complianceStatus === 'Unknown' && Object.keys(result.summary?.complianceChecks || {}).length === 0 && (
-                      <p className="text-sm text-[#B5AFA6] italic">Regulatory check timed out. Re-run the simulation to retry.</p>
+
+                    {(!s.complianceStatus || s.complianceStatus === "Unknown") && Object.keys(s.complianceChecks || {}).length === 0 && (
+                      <p className="text-sm text-[#B5AFA6] italic">Regulatory check timed out. Re-run to retry.</p>
                     )}
-                    <ul className="space-y-4">
-                      {Object.entries(result.summary?.complianceChecks || {}).map(([rule, status]) => (
+
+                    <ul className="space-y-3">
+                      {Object.entries(s.complianceChecks || {}).map(([rule, status]) => (
                         <li key={rule} className="flex justify-between items-center text-sm border-b border-[#F2EFEA] pb-2 last:border-0">
-                          <span className="text-[#8C857B] truncate pr-4">{rule}</span>
+                          <span className="text-[#8C857B] truncate pr-4 text-xs">{rule}</span>
                           <span className={`uppercase tracking-widest text-[10px] px-2 py-1 ${
-                            String(status).toLowerCase() === 'pass' 
-                              ? 'bg-[#F2F5F1] text-[#7D8C7A]' 
-                              : 'bg-[#FFF4F2] text-[#D97972]'
+                            String(status).toLowerCase() === "pass"
+                              ? "bg-[#F2F5F1] text-[#7D8C7A]"
+                              : String(status).toLowerCase() === "n/a"
+                              ? "bg-[#F2EFEA] text-[#B5AFA6]"
+                              : "bg-[#FFF4F2] text-[#D97972]"
                           }`}>
                             {String(status)}
                           </span>
@@ -358,12 +390,11 @@ export default function Home() {
                       ))}
                     </ul>
 
-                    {/* Recommendations & Citations */}
-                    {result.summary?.recommendations?.length > 0 && (
-                      <div className="mt-8 pt-6 border-t border-[#EBE8E3]">
-                        <h4 className="text-xs uppercase tracking-widest text-[#8C857B] mb-4">POJK Citations & Actions</h4>
-                        <ul className="space-y-4">
-                          {result.summary.recommendations.map((rec: any, i: number) => (
+                    {s.recommendations?.length > 0 && (
+                      <div className="mt-6 pt-5 border-t border-[#EBE8E3]">
+                        <h4 className="text-xs uppercase tracking-widest text-[#8C857B] mb-4">POJK Citations</h4>
+                        <ul className="space-y-3">
+                          {s.recommendations.map((rec: any, i: number) => (
                             <li key={i} className="bg-[#F9F8F6] p-3 border-l-2 border-[#DED7CF] text-sm">
                               <p className="text-[#2D2A26] font-medium mb-1">{rec.issue}</p>
                               <p className="text-[#8C857B] mb-2">{rec.action}</p>
@@ -379,6 +410,7 @@ export default function Home() {
                     )}
                   </div>
                 </div>
+
               </div>
             )}
           </section>
