@@ -146,6 +146,34 @@ function prospectiveReserve(
   return Math.max(0, futureAPV - futureAnn);
 }
 
+// ── Solvency margin (OJK POJK 71/2016 simplified RBC) ────────────────────────
+
+/**
+ * Life SMR (POJK 69/2016): Available / BTSM
+ * Available = reserve + 25% gross premium (surplus buffer)
+ * Required  = 0.3% × net-sum-at-risk + 4% × reserve
+ */
+function calcSolvencyMargin(reserve: number, grossAnnual: number, sa: number): number {
+  const available = reserve + grossAnnual * 0.25;
+  const netAtRisk = Math.max(sa - reserve, 0);
+  const required = netAtRisk * 0.003 + reserve * 0.04;
+  if (required <= 0) return 1.50;
+  return Math.round((available / required) * 100) / 100;
+}
+
+/**
+ * Non-life SMR (POJK 28/2012 simplified): for health and travel.
+ * Available = reserve + 25% gross premium
+ * Required  = 10% × (3yr claims exposure) + 4% × reserve
+ * Higher risk charge reflects frequent small claims vs single large death benefit.
+ */
+function calcSolvencyMarginNonLife(reserve: number, grossAnnual: number, netAnnual: number): number {
+  const available = reserve + grossAnnual * 0.25;
+  const required = netAnnual * 3 * 0.10 + reserve * 0.04;
+  if (required <= 0) return 1.50;
+  return Math.round((available / required) * 100) / 100;
+}
+
 // ── Loading helpers ───────────────────────────────────────────────────────────
 
 function getLoading(channels: string[]) {
@@ -188,9 +216,8 @@ function calcLife(input: EngineInput): EngineOutput {
   const annualCommission = Math.round(grossAnnual * loading.commission);
   const annualProfit = Math.round(grossAnnual * loading.profit);
 
-  const totalReserve = reserves.year1;
-  const solvencyMargin = totalReserve > 0 ? (totalReserve + grossAnnual * 0.3) / totalReserve : 1.5;
-  const var95 = Math.round(sa * getQx(age) * 3.0); // 95th percentile VaR proxy
+  const solvencyMargin = calcSolvencyMargin(reserves.year1, grossAnnual, sa);
+  const var95 = Math.round(sa * getQx(age) * 3.0);
 
   return {
     pricing: {
@@ -279,7 +306,7 @@ function calcHealth(input: EngineInput): EngineOutput {
     },
     reserves: { year1: ibnrReserve, year5: Math.round(ibnrReserve * 1.5), year10: Math.round(ibnrReserve * 2.2) },
     riskMetrics: {
-      solvencyMarginRatio: 1.35,
+      solvencyMarginRatio: calcSolvencyMarginNonLife(ibnrReserve, grossAnnual, netAnnual),
       valueAtRisk: Math.round(sa * claimsFreq * 2.5),
       probabilityOfRuin: claimsFreq * 0.1,
     },
@@ -331,7 +358,7 @@ function calcTravel(input: EngineInput): EngineOutput {
     },
     reserves: { year1: 0, year5: 0, year10: 0 },
     riskMetrics: {
-      solvencyMarginRatio: 1.20,
+      solvencyMarginRatio: calcSolvencyMarginNonLife(0, grossAnnual, netAnnual),
       valueAtRisk: Math.round(sa * claimsFreq * 2.0),
       probabilityOfRuin: 0.02,
     },
@@ -390,7 +417,7 @@ function calcMicro(input: EngineInput): EngineOutput {
       year10: 0,
     },
     riskMetrics: {
-      solvencyMarginRatio: 1.25,
+      solvencyMarginRatio: calcSolvencyMargin(Math.round(cappedSA * axn * 0.1), cappedAnnual, cappedSA),
       valueAtRisk: Math.round(cappedSA * getQx(age) * 2.0),
       probabilityOfRuin: 0.03,
     },

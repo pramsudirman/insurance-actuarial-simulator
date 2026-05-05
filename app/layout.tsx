@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Actuarial Simulator",
-  description: "Crafted by newbie, using multi-agent framework. Pitch for Head of Product Insight.",
+  description: "Indonesian insurance pricing simulator — TMI 2011 mortality table, OJK POJK regulatory compliance, NVIDIA NIM.",
 };
 
 export default function RootLayout({
