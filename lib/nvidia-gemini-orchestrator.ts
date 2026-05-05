@@ -55,15 +55,30 @@ export class ActuarialOrchestrator {
   // ── Private helpers ──────────────────────────────────────────────────────────
 
   private buildRegulatoryPrompt(): string {
-    return `You are an OJK (Otoritas Jasa Keuangan) Regulatory Compliance Officer for Indonesian insurance.
-Analyze the insurance product and actuarial data below. Check compliance against:
+    let ojkKnowledgeBase = '';
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const kbPath = path.join(process.cwd(), 'ojk_knowledge_base.md');
+      ojkKnowledgeBase = fs.readFileSync(kbPath, 'utf-8');
+    } catch (e) {
+      console.warn('⚠️ Could not load OJK Knowledge Base, falling back to basic knowledge.', e);
+    }
 
-1. POJK 23/2015 — Product Registration: actuarial memorandum required, clear policy wording, registered before sale.
+    const fallbackRules = `1. POJK 23/2015 — Product Registration: actuarial memorandum required, clear policy wording, registered before sale.
 2. POJK 69/2016 — Actuarial Practice: solvency margin >= 120% (1.20 ratio), appointed actuary (FSA/FSAI), annual valuation, TMI 2011 mortality table preferred.
 3. POJK 76/2016 — Micro Insurance (apply only if productType = micro): premium cap Rp 300,000/year, SA life <= Rp 50M, simplified underwriting.
-4. POJK 13/2018 — Digital Innovation: if digital/embedded channel used, check sandbox eligibility, consumer protection per POJK 8/2023, data security.
+4. POJK 13/2018 — Digital Innovation: if digital/embedded channel used, check sandbox eligibility, consumer protection, data security.
 5. POJK 5/2023 — Risk-Based Supervision: ICS (Insurance Capital Standard) readiness, risk-based capital framework.
 6. POJK 8/2023 — Consumer Protection: product disclosure requirements, cooling-off period, complaints mechanism.
+7. SEOJK 5/2022 — PAYDI/Unit Link: apply only if investment-linked product, check fund management and disclosure requirements.`;
+
+    return `You are an OJK (Otoritas Jasa Keuangan) Regulatory Compliance Officer for Indonesian insurance.
+Analyze the insurance product and actuarial data below. Check compliance against the regulations below.
+
+--- OJK KNOWLEDGE BASE ---
+${ojkKnowledgeBase || fallbackRules}
+--------------------------
 
 Rules:
 - Cite specific article (e.g. "Pasal 4 POJK 23/2015") in every recommendation.
@@ -79,7 +94,8 @@ Return ONLY this JSON (no markdown, no explanation):
     "POJK 76/2016 (Micro)": "pass|fail|n/a",
     "POJK 13/2018 (Digital)": "pass|fail|n/a",
     "POJK 5/2023 (Risk-Based)": "pass|fail",
-    "POJK 8/2023 (Consumer)": "pass|fail"
+    "POJK 8/2023 (Consumer)": "pass|fail",
+    "SEOJK 5/2022 (PAYDI/Unit Link)": "pass|fail|n/a"
   },
   "recommendations": [
     { "priority": "high|medium|low", "issue": "string", "action": "string", "articleReference": "Pasal X POJK YY/YYYY" }
