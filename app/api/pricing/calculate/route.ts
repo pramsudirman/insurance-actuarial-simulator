@@ -50,13 +50,13 @@ export async function POST(request: NextRequest) {
 
     // Stage 2: LLM regulatory check
     const orchestrator = new ActuarialOrchestrator();
-    let regulatory;
+    let regulatory: { overallCompliance: string; checks: Record<string, string>; recommendations: Array<{ priority: string; issue: string; action: string; articleReference: string }> };
     try {
       regulatory = await orchestrator.checkRegulatory(engineInput, actuarial);
     } catch (regErr) {
       console.error('Regulatory check failed (non-fatal):', regErr);
       regulatory = {
-        overallCompliance: 'Unknown' as const,
+        overallCompliance: 'Unknown',
         checks: {},
         recommendations: [],
       };
@@ -88,9 +88,9 @@ export async function POST(request: NextRequest) {
         riskMetrics: actuarial.riskMetrics,
         profitability: actuarial.profitability,
         confidenceBreakdown: actuarial.confidence,
-        complianceStatus: (regulatory as any).overallCompliance ?? 'Unknown',
-        complianceChecks: (regulatory as any).checks ?? {},
-        recommendations: (regulatory as any).recommendations ?? [],
+        complianceStatus: regulatory.overallCompliance,
+        complianceChecks: regulatory.checks,
+        recommendations: regulatory.recommendations,
       },
     });
 
