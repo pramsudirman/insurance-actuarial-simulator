@@ -65,13 +65,17 @@ export class ActuarialOrchestrator {
       console.warn('⚠️ Could not load OJK Knowledge Base, falling back to basic knowledge.', e);
     }
 
-    const fallbackRules = `1. POJK 23/2015 — Product Registration: actuarial memorandum required, clear policy wording, registered before sale.
-2. POJK 69/2016 — Actuarial Practice: solvency margin >= 120% (1.20 ratio), appointed actuary (FSA/FSAI), annual valuation, TMI 2011 mortality table preferred.
-3. POJK 76/2016 — Micro Insurance (apply only if productType = micro): premium cap Rp 300,000/year, SA life <= Rp 50M, simplified underwriting.
-4. POJK 13/2018 — Digital Innovation: if digital/embedded channel used, check sandbox eligibility, consumer protection, data security.
-5. POJK 5/2023 — Risk-Based Supervision: ICS (Insurance Capital Standard) readiness, risk-based capital framework.
-6. POJK 8/2023 — Consumer Protection: product disclosure requirements, cooling-off period, complaints mechanism.
-7. SEOJK 5/2022 — PAYDI/Unit Link: apply only if investment-linked product, check fund management and disclosure requirements.`;
+    const fallbackRules = `1. UU 40/2014 — Insurance Law: min paid-up capital Rp 150B (life)/Rp 100B (general), fit & proper test, appointed actuary mandatory.
+2. POJK 23/2015 — Product Registration: actuarial memorandum required, OJK approval before marketing, clear Bahasa Indonesia policy wording.
+3. POJK 69/2016 — Actuarial Practice: solvency margin >= 120%, FSAI-certified actuary, annual actuarial valuation.
+4. POJK 76/2016 — Micro Insurance (productType=micro only): premium cap Rp 300k/year, SA cap Rp 20M life/Rp 10M health, claims settled within 10 business days.
+5. POJK 13/2018 — Digital Innovation: OJK sandbox registration required for digital channels, data localization in Indonesia.
+6. POJK 14/2020 — Bancassurance (channel=bancassurance only): referral vs integration model disclosure, commission transparency, certified sales staff.
+7. POJK 5/2023 — Risk-Based Supervision: ICS parallel run with RBC, periodic risk self-assessment framework.
+8. POJK 8/2023 — Consumer Protection: 14-day cooling-off period, free complaints mechanism within 20 business days, no data usage beyond consent.
+9. SEOJK 18/2021 — Digital Marketing: e-policy valid with certified e-signature, digital acknowledgement before first premium, marketing pre-approved by actuary.
+10. SEOJK 5/2022 — PAYDI/Unit Link (investment-linked only): risk profile assessment, no 100% first-year acquisition cost allocation, welcoming call mandatory.
+11. UU PDP 27/2022 — Data Protection: explicit consent for sensitive data, breach notification, fines up to 2% annual revenue.`;
 
     return `You are an OJK (Otoritas Jasa Keuangan) Regulatory Compliance Officer for Indonesian insurance.
 Analyze the insurance product and actuarial data below. Check compliance against the regulations below.
@@ -89,13 +93,17 @@ Return ONLY this JSON (no markdown, no explanation):
 {
   "overallCompliance": "compliant|non-compliant|requires_sandbox",
   "checks": {
+    "UU 40/2014 (Licensing)": "pass|fail",
     "POJK 23/2015 (Registration)": "pass|fail",
     "POJK 69/2016 (Actuarial)": "pass|fail",
     "POJK 76/2016 (Micro)": "pass|fail|n/a",
     "POJK 13/2018 (Digital)": "pass|fail|n/a",
+    "POJK 14/2020 (Bancassurance)": "pass|fail|n/a",
     "POJK 5/2023 (Risk-Based)": "pass|fail",
     "POJK 8/2023 (Consumer)": "pass|fail",
-    "SEOJK 5/2022 (PAYDI/Unit Link)": "pass|fail|n/a"
+    "SEOJK 18/2021 (E-Policy)": "pass|fail|n/a",
+    "SEOJK 5/2022 (PAYDI/Unit Link)": "pass|fail|n/a",
+    "UU PDP 27/2022 (Data Protection)": "pass|fail"
   },
   "recommendations": [
     { "priority": "high|medium|low", "issue": "string", "action": "string", "articleReference": "Pasal X POJK YY/YYYY" }
