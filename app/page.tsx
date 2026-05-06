@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getFilteredItems, type DossierItem, type ProductType, type Channel } from "@/lib/regulatory-dossier-data";
 
 function LoadingMessage() {
   const [step, setStep] = useState(0);
@@ -19,6 +20,62 @@ function LoadingMessage() {
   }, []);
 
   return <span className="italic text-[#8c857b] tracking-wider text-sm">{messages[step]}</span>;
+}
+
+const PRIORITY_STYLE: Record<string, { badge: string; border: string; label: string }> = {
+  CRITICAL: { badge: "bg-[#FFF0EE] text-[#C0392B]", border: "border-[#E57373]", label: "CRITICAL" },
+  HIGH:     { badge: "bg-[#FFF4F2] text-[#D97972]", border: "border-[#E8A09A]", label: "HIGH" },
+  MEDIUM:   { badge: "bg-[#FFFBF0] text-[#B8860B]", border: "border-[#D4B483]", label: "MEDIUM" },
+  WATCH:    { badge: "bg-[#F0F4FF] text-[#5B7FD4]", border: "border-[#A0B4E8]", label: "WATCH" },
+};
+
+function ProductDossier({ productType, channels }: { productType: ProductType; channels: Channel[] }) {
+  const items = getFilteredItems(productType, channels);
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? items : items.slice(0, 4);
+
+  return (
+    <div className="mt-12 pt-10 border-t border-[#EBE8E3]">
+      <div className="flex items-baseline justify-between mb-2">
+        <h2 className="text-xl font-serif text-[#2D2A26]">Head of Product: Action Plan</h2>
+        <span className="text-[10px] uppercase tracking-widest text-[#8C857B]">
+          {items.length} items · {productType} · {channels.join(", ")}
+        </span>
+      </div>
+      <p className="text-sm text-[#8C857B] mb-8">
+        Filtered regulatory action items for this product type and distribution channel.
+      </p>
+
+      <div className="space-y-4">
+        {visible.map((item: DossierItem, i: number) => {
+          const style = PRIORITY_STYLE[item.priority];
+          return (
+            <div key={i} className={`p-5 border-l-4 bg-white ${style.border}`}>
+              <div className="flex items-start gap-3 mb-2">
+                <span className={`text-[10px] font-semibold uppercase tracking-widest px-2 py-1 shrink-0 ${style.badge}`}>
+                  {item.priority}
+                </span>
+                <div>
+                  <p className="text-[#2D2A26] font-medium text-sm leading-snug">{item.issue}</p>
+                  <p className="text-[10px] uppercase tracking-widest text-[#A69F96] mt-1">{item.regulation}</p>
+                </div>
+              </div>
+              <p className="text-[#6B6460] text-sm leading-relaxed pl-[52px]">{item.action}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      {items.length > 4 && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="mt-6 w-full py-3 text-xs uppercase tracking-widest text-[#8C857B] border border-[#EBE8E3] hover:border-[#4A443C] hover:text-[#4A443C] transition-colors"
+        >
+          {expanded ? `Show less` : `Show ${items.length - 4} more items`}
+        </button>
+      )}
+    </div>
+  );
 }
 
 export default function Home() {
@@ -410,6 +467,12 @@ export default function Home() {
                     )}
                   </div>
                 </div>
+
+                {/* Action Plan Dossier */}
+                <ProductDossier
+                  productType={s.productType as ProductType}
+                  channels={[formData.distributionChannel as Channel]}
+                />
 
               </div>
             )}
