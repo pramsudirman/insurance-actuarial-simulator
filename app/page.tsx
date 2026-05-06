@@ -86,7 +86,6 @@ export default function Home() {
     productType: "life",
     ageMin: 25,
     ageMax: 55,
-    geography: "Indonesia",
     sumAssured: 500000000,
     policyTerm: 10,
     distributionChannel: "digital"
@@ -106,7 +105,7 @@ export default function Home() {
           productType: formData.productType,
           targetMarket: {
             ageRange: [formData.ageMin, formData.ageMax],
-            geography: formData.geography
+            geography: "Indonesia"
           },
           coverage: {
             sumAssured: formData.sumAssured,
