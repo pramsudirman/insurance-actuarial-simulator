@@ -385,7 +385,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Confidence + Regulatory */}
+                {/* Confidence + Regulatory Status (checks only, no citations) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Confidence */}
                   <div>
@@ -412,7 +412,7 @@ export default function Home() {
                     </ul>
                   </div>
 
-                  {/* Regulatory */}
+                  {/* Regulatory Status — checks only */}
                   <div>
                     <h3 className="text-sm uppercase tracking-widest text-[#2D2A26] border-b border-[#EBE8E3] pb-3 mb-5 flex justify-between">
                       <span>OJK Regulatory Status</span>
@@ -446,33 +446,34 @@ export default function Home() {
                         </li>
                       ))}
                     </ul>
-
-                    {s.recommendations?.length > 0 && (
-                      <div className="mt-6 pt-5 border-t border-[#EBE8E3]">
-                        <h4 className="text-xs uppercase tracking-widest text-[#8C857B] mb-4">POJK Citations</h4>
-                        <ul className="space-y-3">
-                          {s.recommendations.map((rec: any, i: number) => (
-                            <li key={i} className="bg-[#F9F8F6] p-3 border-l-2 border-[#DED7CF] text-sm">
-                              <p className="text-[#2D2A26] font-medium mb-1">{rec.issue}</p>
-                              <p className="text-[#8C857B] mb-2">{rec.action}</p>
-                              {rec.articleReference && (
-                                <span className="inline-block bg-[#EBE8E3] text-[#4A443C] text-[10px] px-2 py-1 uppercase tracking-wider">
-                                  {rec.articleReference}
-                                </span>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
                   </div>
                 </div>
 
-                {/* Action Plan Dossier */}
+                {/* Action Plan — right after confidence + status row */}
                 <ProductDossier
                   productType={s.productType as ProductType}
                   channels={[formData.distributionChannel as Channel]}
                 />
+
+                {/* POJK Citations — full width below action plan */}
+                {s.recommendations?.length > 0 && (
+                  <div className="pt-8 border-t border-[#EBE8E3]">
+                    <h4 className="text-xs uppercase tracking-widest text-[#8C857B] mb-4">LLM Regulatory Citations</h4>
+                    <ul className="space-y-3">
+                      {s.recommendations.map((rec: any, i: number) => (
+                        <li key={i} className="bg-[#F9F8F6] p-4 border-l-2 border-[#DED7CF] text-sm">
+                          <p className="text-[#2D2A26] font-medium mb-1">{rec.issue}</p>
+                          <p className="text-[#8C857B] mb-2">{rec.action}</p>
+                          {rec.articleReference && (
+                            <span className="inline-block bg-[#EBE8E3] text-[#4A443C] text-[10px] px-2 py-1 uppercase tracking-wider">
+                              {rec.articleReference}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
               </div>
             )}
