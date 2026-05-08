@@ -410,11 +410,6 @@ export default function Home() {
                       })}
                     </ul>
 
-                    {/* Action Plan — directly below confidence */}
-                    <ProductDossier
-                      productType={s.productType as ProductType}
-                      channels={[formData.distributionChannel as Channel]}
-                    />
                   </div>
 
                   {/* Regulatory Status — checks only */}
@@ -453,6 +448,12 @@ export default function Home() {
                     </ul>
                   </div>
                 </div>
+
+                {/* Action Plan — full width */}
+                <ProductDossier
+                  productType={s.productType as ProductType}
+                  channels={[formData.distributionChannel as Channel]}
+                />
 
                 {/* POJK Citations — full width below grid */}
                 {s.recommendations?.length > 0 && (
