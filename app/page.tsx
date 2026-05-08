@@ -35,7 +35,7 @@ function ProductDossier({ productType, channels }: { productType: ProductType; c
   const visible = expanded ? items : items.slice(0, 4);
 
   return (
-    <div className="mt-12 pt-10 border-t border-[#EBE8E3]">
+    <div>
       <div className="flex items-baseline justify-between mb-2">
         <h2 className="text-xl font-serif text-[#2D2A26]">Head of Product: Action Plan</h2>
         <span className="text-[10px] uppercase tracking-widest text-[#8C857B]">
@@ -384,76 +384,80 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Confidence + Regulatory Status (checks only, no citations) */}
+                {/* Action Plan (left) + Confidence & Regulatory (right) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Confidence */}
+                  {/* Action Plan — left column */}
                   <div>
-                    <h3 className="text-sm uppercase tracking-widest text-[#2D2A26] border-b border-[#EBE8E3] pb-3 mb-5 flex justify-between">
-                      <span>Model Confidence</span>
-                      <span>{Math.round((s.confidenceBreakdown?.overall || 0) * 100)}%</span>
-                    </h3>
-                    <ul className="space-y-4">
-                      {Object.entries(s.confidenceBreakdown || {}).map(([key, value]) => {
-                        if (key === "overall") return null;
-                        const score = Number(value);
-                        return (
-                          <li key={key} className="text-sm">
-                            <div className="flex justify-between text-[#8C857B] mb-1">
-                              <span className="capitalize">{key.replace(/([A-Z])/g, " $1").trim()}</span>
-                              <span>{Math.round(score * 100)}%</span>
-                            </div>
-                            <div className="w-full h-[1px] bg-[#EBE8E3]">
-                              <div className="h-full bg-[#8C857B]" style={{ width: `${score * 100}%` }}></div>
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-
+                    <ProductDossier
+                      productType={s.productType as ProductType}
+                      channels={[formData.distributionChannel as Channel]}
+                    />
                   </div>
 
-                  {/* Regulatory Status — checks only */}
-                  <div>
-                    <h3 className="text-sm uppercase tracking-widest text-[#2D2A26] border-b border-[#EBE8E3] pb-3 mb-5 flex justify-between">
-                      <span>OJK Regulatory Status</span>
-                      <span className={
-                        !s.complianceStatus || s.complianceStatus === "Unknown" ? "text-[#B5AFA6]" :
-                        String(s.complianceStatus).toLowerCase().includes("compliant") ? "text-[#7D8C7A]" :
-                        s.complianceStatus === "requires_sandbox" ? "text-[#C9A84C]" :
-                        "text-[#D97972]"
-                      }>
-                        {!s.complianceStatus || s.complianceStatus === "Unknown" ? "Pending" : s.complianceStatus}
-                      </span>
-                    </h3>
+                  {/* Confidence + Regulatory — right column */}
+                  <div className="space-y-10">
+                    {/* Model Confidence */}
+                    <div>
+                      <h3 className="text-sm uppercase tracking-widest text-[#2D2A26] border-b border-[#EBE8E3] pb-3 mb-5 flex justify-between">
+                        <span>Model Confidence</span>
+                        <span>{Math.round((s.confidenceBreakdown?.overall || 0) * 100)}%</span>
+                      </h3>
+                      <ul className="space-y-4">
+                        {Object.entries(s.confidenceBreakdown || {}).map(([key, value]) => {
+                          if (key === "overall") return null;
+                          const score = Number(value);
+                          return (
+                            <li key={key} className="text-sm">
+                              <div className="flex justify-between text-[#8C857B] mb-1">
+                                <span className="capitalize">{key.replace(/([A-Z])/g, " $1").trim()}</span>
+                                <span>{Math.round(score * 100)}%</span>
+                              </div>
+                              <div className="w-full h-[1px] bg-[#EBE8E3]">
+                                <div className="h-full bg-[#8C857B]" style={{ width: `${score * 100}%` }}></div>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
 
-                    {(!s.complianceStatus || s.complianceStatus === "Unknown") && Object.keys(s.complianceChecks || {}).length === 0 && (
-                      <p className="text-sm text-[#B5AFA6] italic">Regulatory check timed out. Re-run to retry.</p>
-                    )}
+                    {/* OJK Regulatory Status */}
+                    <div>
+                      <h3 className="text-sm uppercase tracking-widest text-[#2D2A26] border-b border-[#EBE8E3] pb-3 mb-5 flex justify-between">
+                        <span>OJK Regulatory Status</span>
+                        <span className={
+                          !s.complianceStatus || s.complianceStatus === "Unknown" ? "text-[#B5AFA6]" :
+                          String(s.complianceStatus).toLowerCase().includes("compliant") ? "text-[#7D8C7A]" :
+                          s.complianceStatus === "requires_sandbox" ? "text-[#C9A84C]" :
+                          "text-[#D97972]"
+                        }>
+                          {!s.complianceStatus || s.complianceStatus === "Unknown" ? "Pending" : s.complianceStatus}
+                        </span>
+                      </h3>
 
-                    <ul className="space-y-3">
-                      {Object.entries(s.complianceChecks || {}).map(([rule, status]) => (
-                        <li key={rule} className="flex justify-between items-center text-sm border-b border-[#F2EFEA] pb-2 last:border-0">
-                          <span className="text-[#8C857B] truncate pr-4 text-xs">{rule}</span>
-                          <span className={`uppercase tracking-widest text-[10px] px-2 py-1 ${
-                            String(status).toLowerCase() === "pass"
-                              ? "bg-[#F2F5F1] text-[#7D8C7A]"
-                              : String(status).toLowerCase() === "n/a"
-                              ? "bg-[#F2EFEA] text-[#B5AFA6]"
-                              : "bg-[#FFF4F2] text-[#D97972]"
-                          }`}>
-                            {String(status)}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                      {(!s.complianceStatus || s.complianceStatus === "Unknown") && Object.keys(s.complianceChecks || {}).length === 0 && (
+                        <p className="text-sm text-[#B5AFA6] italic">Regulatory check timed out. Re-run to retry.</p>
+                      )}
+
+                      <ul className="space-y-3">
+                        {Object.entries(s.complianceChecks || {}).map(([rule, status]) => (
+                          <li key={rule} className="flex justify-between items-center text-sm border-b border-[#F2EFEA] pb-2 last:border-0">
+                            <span className="text-[#8C857B] truncate pr-4 text-xs">{rule}</span>
+                            <span className={`uppercase tracking-widest text-[10px] px-2 py-1 ${
+                              String(status).toLowerCase() === "pass"
+                                ? "bg-[#F2F5F1] text-[#7D8C7A]"
+                                : String(status).toLowerCase() === "n/a"
+                                ? "bg-[#F2EFEA] text-[#B5AFA6]"
+                                : "bg-[#FFF4F2] text-[#D97972]"
+                            }`}>
+                              {String(status)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 </div>
-
-                {/* Action Plan — full width */}
-                <ProductDossier
-                  productType={s.productType as ProductType}
-                  channels={[formData.distributionChannel as Channel]}
-                />
 
                 {/* POJK Citations — full width below grid */}
                 {s.recommendations?.length > 0 && (
