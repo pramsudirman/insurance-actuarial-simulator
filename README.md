@@ -1,3 +1,7 @@
+Access here: https://insurance-actuarial-simulator.vercel.app/
+
+---
+
 🏛️ Actuarial Simulator
 A PM's Guide to Indonesian Insurance Regulation — Powered by AI
 -- 
